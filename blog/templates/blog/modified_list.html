@@ -1,0 +1,12 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+    {% for edit in object_list %}
+        <div class="post">
+            <div class="date">
+                {{ edit.edited_date }}
+            </div>
+            <h2>>{{ edit.post_fk }}</a></h2>
+        </div>
+    {% endfor %}
+{% endblock %}

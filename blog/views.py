@@ -1,46 +1,49 @@
-from django.shortcuts import redirect, render
+from time import time
 from django.utils import timezone
-from .models import Post
-from django.shortcuts import render, get_object_or_404
-from .forms import PostForm
+from .models import Edited_by, Post
+from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.urls import reverse
 
 # Create your views here.
 
-def post_list(request):
-    posts=Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
-    return render(request, 'blog/post_list.html', {'posts':posts})
+# Post List
+class PostList(ListView):
+    paginate_by=10
+    model=Post.objects.filter(published_date__lte=timezone.now()).order_by('published_date')
+    
+
+# Post Details
+
+class PostDetail(DetailView):
+    model=Post
+    context_object_name='post'
+
+    def get_context_data(self,**kwargs):
+        context= super().get_context_data(**kwargs)
+        return context
+        
 
 
-
-def post_detail(request, pk):
-   post = get_object_or_404(Post, pk=pk)
-   return render(request, 'blog/post_detail.html', {'post': post})
-
-def post_new(request):
-    if request.method=="POST":
-        form = PostForm(request.POST)
-        if form.is_valid():
-            post= form.save(commit=False)
-            post.author=request.user
-            post.published_date = timezone.now()
-            post.save()
-            return redirect('post_detail', pk=post.pk)
-    else:
-        form=PostForm()
-        return render(request, 'blog/post_edit.html', {'form':form})
+class PostNew(CreateView):
+    model=Post
+    fields=['title','text','author']
+    
+    def get_success_url(self):
+        return reverse("post_detail", kwargs={'pk': self.object.pk})
+        
+        
 
 
-def post_edit(request, pk):
-    post=get_object_or_404(Post, pk=pk)
+class PostEdit(UpdateView):
+    model= Post
+    fields=['title','text','author']
 
-    if request.method=='POST':
-        form = PostForm(request.POST, instance=post)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.author = request.user
-            post.published_date = timezone.now()
-            post.save()
-            return redirect('post_detail', pk=post.pk)
-    else:
-        form = PostForm(instance=post)
-        return render(request, 'blog/post_edit.html', {'form': form})
+    def get_success_url(self):
+        edit=Edited_by
+        edit.post_fk=self.request.user
+        edit.edited_date=timezone.now()
+        return reverse("post_detail", kwargs={'pk': self.object.pk})
+
+
+class ModifiedList(ListView):
+    model=Edited_by

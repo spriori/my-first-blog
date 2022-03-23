@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 
 
@@ -11,7 +12,8 @@ class Post(models.Model):
     created_date = models.DateTimeField(
             default=timezone.now)
     published_date = models.DateTimeField(
-            blank=True, null=True)
+        auto_now = True
+    )
 
     def publish(self):
         self.published_date = timezone.now()
@@ -19,3 +21,10 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+class Edited_by(models.Model):
+    author=models.ForeignKey(User,on_delete=models.CASCADE)
+    post_fk=models.ForeignKey(Post, on_delete=models.CASCADE)
+    edited_date= models.DateTimeField(
+        auto_now = True
+    )
